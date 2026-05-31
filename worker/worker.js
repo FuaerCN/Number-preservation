@@ -530,8 +530,15 @@ export default {
     // 路由 2：触发发送动态验证码到 Telegram
     if (path === "/api/auth/send" && request.method === "POST") {
       try {
+        // === 诊断环境变是否生效逻辑增强 ===
         if (!env.TG_BOT_TOKEN || !env.TG_CHAT_ID) {
-          return new Response(JSON.stringify({ success: false, message: "后端环境变量未配置" }), { status: 500, headers: corsHeaders });
+          let missingVars = [];
+          if (!env.TG_BOT_TOKEN) missingVars.push("TG_BOT_TOKEN");
+          if (!env.TG_CHAT_ID) missingVars.push("TG_CHAT_ID");
+          return new Response(JSON.stringify({ 
+              success: false, 
+              message: `环境变量未生效：缺少 ${missingVars.join(' 和 ')}。因为您是通过后台手动添加的机密，请提交一次 GitHub 代码更新，以强制系统重新部署生效！` 
+          }), { status: 500, headers: corsHeaders });
         }
         
         // 生成 6 位纯数字验证码
